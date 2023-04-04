@@ -1,5 +1,8 @@
-import { createApp } from 'vue'
-import App from './App.vue'
-import './assets/tailwind.css'
+import { createApp } from 'vue';
+import App from './App.vue';
+import './assets/tailwind.css'; // Update this import statement
 
-createApp(App).mount('#app')
+// Remove this import statement
+// import '@fontsource/inter';
+
+createApp(App).mount('#app');
