@@ -1,5 +1,11 @@
-@tailwind base;
+@import 'tailwindcss/base';
+@import 'tailwindcss/components';
+@import 'tailwindcss/utilities';
 
-@tailwind components;
+html {
+  font-family: 'Inter', sans-serif;
+}
 
-@tailwind utilities;
+body {
+  background-color: #f5f1e8; /* Warm background color */
+}
