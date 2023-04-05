@@ -1,0 +1,11 @@
+{
+  "IngredientForm": {
+    "description": "Auto imported from components/IngredientForm.vue"
+  },
+  "RecipeDetails": {
+    "description": "Auto imported from components/RecipeDetails.vue"
+  },
+  "RecipeList": {
+    "description": "Auto imported from components/RecipeList.vue"
+  }
+}
