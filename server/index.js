@@ -17,12 +17,15 @@ app.post("/api/generate-recipes", async (req, res) => {
     ? `only ${ingredients}`
     : ingredients;
 
-  const messages = [
-    {
-      role: "system",
-      content: `Generate a list of 5 recipes using ${ingredientsText}. Meal preferences: ${preferences}.`,
-    },
-  ];
+    const messages = [
+      {
+        role: "system",
+        content: `Generate a list of 5 unique recipes using ${ingredientsText} with the following preferences: ${preferences}. Please format each recipe as follows: |Title|: <title>, |Ingredients|: <ingredients>, |Directions|: <directions>.`,
+      },
+    ];
+    
+    
+      
 
   try {
     const response = await axios.post(
@@ -30,7 +33,7 @@ app.post("/api/generate-recipes", async (req, res) => {
       {
         model: chatGptModel,
         messages,
-        max_tokens: 400,
+        max_tokens: 1000,
         n: 1,
         temperature: 0.8,
       },
@@ -41,18 +44,27 @@ app.post("/api/generate-recipes", async (req, res) => {
         },
       }
     );
-  
-    console.log("OpenAI API response:", response.data);
-  
-    const assistantMessages = response.data.choices[0].message.content.trim().split('\n');
 
-    const recipes = assistantMessages.map((recipeText, index) => {
-      const imageUrl = `https://source.unsplash.com/featured/?food,recipe${index}`;
-      return { recipeText, imageUrl };
-    });
-  
+    console.log("OpenAI API response:", response.data);
+
+    const assistantMessages = response.data.choices[0].message.content.trim();
+
+const recipeRegex = /\|Title\|: (.*?), \|Ingredients\|: (.*?), \|Directions\|: (.*?)(?=\|Title\||$)/gs;
+const recipes = [];
+
+let match;
+while ((match = recipeRegex.exec(assistantMessages)) !== null) {
+  const title = match[1];
+  const ingredients = match[2];
+  const directions = match[3];
+  const imageUrl = `https://source.unsplash.com/featured/?food,recipe${recipes.length}`;
+  recipes.push({ title, ingredients, directions, imageUrl });
+}
+
+
+
     console.log("Generated recipes:", recipes);
-  
+
     res.json({ recipes });
   } catch (error) {
     console.error("OpenAI API error:", error.response?.data || error.message);
@@ -60,8 +72,8 @@ app.post("/api/generate-recipes", async (req, res) => {
       .status(500)
       .json({ message: "An error occurred while generating recipes." });
   }
-  
 });
+
 
 
 

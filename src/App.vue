@@ -3,18 +3,24 @@
     <h1 class="text-4xl font-bold mb-8">ChowGPT</h1>
     <IngredientForm v-on:submit-query="fetchRecipes" />
 
+    <!-- Loading spinner -->
+    <div v-if="isLoading" class="flex justify-center items-center">
+      <div class="loader"></div>
+    </div>
+
     <RecipeList
       :recipes="recipes"
       @select="selectRecipe"
-      v-if="!selectedRecipe"
+      v-if="!selectedRecipe && !isLoading"
     />
     <RecipeDetails
       :recipe="selectedRecipe"
       @back="selectedRecipe = null"
-      v-else
+      v-else-if="!isLoading"
     />
   </div>
 </template>
+
 
 <script>
 import axios from "axios";
@@ -32,46 +38,48 @@ export default {
     return {
       recipes: [],
       selectedRecipe: null,
+      isLoading: false,
     };
   },
   methods: {
     async fetchRecipes(query) {
-      console.log("fetchRecipes called", query);
-      const response = await axios.post("http://localhost:3001/api/generate-recipes", query);
+      this.isLoading = true;
+      this.selectedRecipe = null;
+  console.log("fetchRecipes called", query);
+  const response = await axios.post("http://localhost:3001/api/generate-recipes", query);
+
+  console.log('Server response:', response.data);
+
+  if (response.data && response.data.recipes) {
+    this.recipes = response.data.recipes.map(({ title, ingredients, directions, imageUrl }) => {
+      imageUrl += `&random=${Math.random()}`; // Add a random parameter to the image URL
+
+      const formattedIngredients = ingredients
+        .split(", ")
+        .map((ingredient) => ({ original: ingredient }));
+
+      const formattedInstructions = directions
+        .split("\n")
+        .filter((step) => step.trim().length > 0)
+        .map((step, index) => `<p>${index + 1}. ${step}</p>`)
+        .join("");
+
+      return {
+        title,
+        ingredients: formattedIngredients,
+        instructions: formattedInstructions,
+        imageUrl,
+      };
+    });
+  } else {
+    console.error('Unexpected server response. "recipes" property is missing.');
+    this.recipes = [];
+  }
+  this.isLoading = false;
+},
 
 
-      this.recipes = response.data.recipes.map(({ recipeText, imageUrl }) => {
-        const titleMatch = recipeText.match(/^(.*?)\sIngredients/);
-        const ingredientsMatch = recipeText.match(
-          /Ingredients:\s(.*?)\sInstructions/
-        );
-        const instructionsMatch = recipeText.match(/Instructions:\s(.*)/);
 
-        const title = titleMatch ? titleMatch[1].trim() : "";
-        const ingredients = ingredientsMatch
-          ? ingredientsMatch[1]
-              .trim()
-              .split("-")
-              .map((ingredient) => ingredient.trim())
-              .filter((ingredient) => ingredient.length > 0)
-          : [];
-        const instructions = instructionsMatch
-          ? instructionsMatch[1]
-              .trim()
-              .split(/(\d+\.\s)/)
-              .filter((_, i) => i % 2 !== 0)
-              .map((step, index) => `<p>${index + 1}. ${step}</p>`)
-              .join("")
-          : "";
-
-        return {
-          title,
-          ingredients,
-          instructions,
-          imageUrl,
-        };
-      });
-    },
     selectRecipe(recipe) {
       this.selectedRecipe = recipe;
     },
@@ -83,4 +91,23 @@ export default {
 @import "tailwindcss/base";
 @import "tailwindcss/components";
 @import "tailwindcss/utilities";
+
+.loader {
+  border: 4px solid #f3f3f3;
+  border-top: 4px solid #3498db;
+  border-radius: 50%;
+  width: 30px;
+  height: 30px;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
 </style>
+
