@@ -1,13 +1,16 @@
+require("dotenv").config();
+
 const express = require("express");
 const cors = require("cors");
 const axios = require("axios");
 const bodyParser = require("body-parser");
 
+
 const app = express();
 app.use(cors());
 app.use(bodyParser.json());
 
-const apiKey = "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";
+const apiKey = process.env.OPENAI_API_KEY;
 const chatGptUrl = "https://api.openai.com/v1/chat/completions";
 const chatGptModel = "gpt-3.5-turbo";
 
