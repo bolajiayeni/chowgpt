@@ -1,22 +1,29 @@
 <template>
   <div class="container mx-auto p-4">
     <h1 class="text-4xl font-bold mb-8">ChowGPT</h1>
-    <IngredientForm @submit="fetchRecipes" v-if="!selectedRecipe" />
-    <RecipeList :recipes="recipes" @select="selectRecipe" v-if="!selectedRecipe" />
-    <RecipeDetails :recipe="selectedRecipe" @back="selectedRecipe = null" v-else />
+    <IngredientForm v-on:submit-query="fetchRecipes" />
+
+    <RecipeList
+      :recipes="recipes"
+      @select="selectRecipe"
+      v-if="!selectedRecipe"
+    />
+    <RecipeDetails
+      :recipe="selectedRecipe"
+      @back="selectedRecipe = null"
+      v-else
+    />
   </div>
 </template>
 
-
-
 <script>
-import axios from 'axios';
-import IngredientForm from './components/IngredientForm.vue';
-import RecipeList from './components/RecipeList.vue';
-import RecipeDetails from './components/RecipeDetails.vue';
+import axios from "axios";
+import IngredientForm from "./components/IngredientForm.vue";
+import RecipeList from "./components/RecipeList.vue";
+import RecipeDetails from "./components/RecipeDetails.vue";
 
 export default {
-  components: { 
+  components: {
     IngredientForm,
     RecipeList,
     RecipeDetails,
@@ -29,39 +36,51 @@ export default {
   },
   methods: {
     async fetchRecipes(query) {
-  const response = await axios.get(
-    `https://api.spoonacular.com/recipes/complexSearch?apiKey=${process.env.VUE_APP_SPOONACULAR_API_KEY}&${query}`
-  );
-  this.recipes = response.data.results;
-},
+      console.log("fetchRecipes called", query);
+      const response = await axios.post("http://localhost:3001/api/generate-recipes", query);
 
-async fetchRecipeDetails(id) {
-  const response = await axios.get(
-    `https://api.spoonacular.com/recipes/${id}/information?apiKey=${process.env.VUE_APP_SPOONACULAR_API_KEY}`
-  );
-  const data = response.data;
-  return {
-    id: data.id,
-    title: data.title,
-    image: data.image,
-    ingredients: data.extendedIngredients,
-    instructions: data.analyzedInstructions[0]?.steps
-      .map((step) => `<p>${step.number}. ${step.step}</p>`)
-      .join(''),
-  };
-},
 
-async selectRecipe(id) {
-    this.selectedRecipe = await this.fetchRecipeDetails(id);
-  },
+      this.recipes = response.data.recipes.map(({ recipeText, imageUrl }) => {
+        const titleMatch = recipeText.match(/^(.*?)\sIngredients/);
+        const ingredientsMatch = recipeText.match(
+          /Ingredients:\s(.*?)\sInstructions/
+        );
+        const instructionsMatch = recipeText.match(/Instructions:\s(.*)/);
 
+        const title = titleMatch ? titleMatch[1].trim() : "";
+        const ingredients = ingredientsMatch
+          ? ingredientsMatch[1]
+              .trim()
+              .split("-")
+              .map((ingredient) => ingredient.trim())
+              .filter((ingredient) => ingredient.length > 0)
+          : [];
+        const instructions = instructionsMatch
+          ? instructionsMatch[1]
+              .trim()
+              .split(/(\d+\.\s)/)
+              .filter((_, i) => i % 2 !== 0)
+              .map((step, index) => `<p>${index + 1}. ${step}</p>`)
+              .join("")
+          : "";
+
+        return {
+          title,
+          ingredients,
+          instructions,
+          imageUrl,
+        };
+      });
+    },
+    selectRecipe(recipe) {
+      this.selectedRecipe = recipe;
+    },
   },
 };
 </script>
 
-
 <style>
-@import 'tailwindcss/base';
-@import 'tailwindcss/components';
-@import 'tailwindcss/utilities';
+@import "tailwindcss/base";
+@import "tailwindcss/components";
+@import "tailwindcss/utilities";
 </style>
