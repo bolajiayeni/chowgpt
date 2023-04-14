@@ -21,7 +21,6 @@
   </div>
 </template>
 
-
 <script>
 import axios from "axios";
 import IngredientForm from "./components/IngredientForm.vue";
@@ -45,40 +44,45 @@ export default {
     async fetchRecipes(query) {
       this.isLoading = true;
       this.selectedRecipe = null;
-  console.log("fetchRecipes called", query);
-  const response = await axios.post("http://localhost:3001/api/generate-recipes", query);
+      console.log("fetchRecipes called", query);
+      const response = await axios.post(
+        "http://localhost:3001/api/generate-recipes",
+        query
+      );
 
-  console.log('Server response:', response.data);
+      console.log("Server response:", response.data);
 
-  if (response.data && response.data.recipes) {
-    this.recipes = response.data.recipes.map(({ title, ingredients, directions, imageUrl }) => {
-      imageUrl += `&random=${Math.random()}`; // Add a random parameter to the image URL
+      if (response.data && response.data.recipes) {
+        this.recipes = response.data.recipes.map(
+          ({ title, ingredients, directions, imageUrl }) => {
+            imageUrl += `&random=${Math.random()}`; // Add a random parameter to the image URL
 
-      const formattedIngredients = ingredients
-        .split(", ")
-        .map((ingredient) => ({ original: ingredient }));
+            const formattedIngredients = ingredients
+              .split(", ")
+              .map((ingredient) => ({ original: ingredient }));
 
-      const formattedInstructions = directions
-        .split("\n")
-        .filter((step) => step.trim().length > 0)
-        .map((step, index) => `<p>${index + 1}. ${step}</p>`)
-        .join("");
+            const formattedInstructions = directions
+              .split("\n")
+              .filter((step) => step.trim().length > 0)
+              .map((step, index) => `<p>${index + 1}. ${step}</p>`)
+              .join("");
 
-      return {
-        title,
-        ingredients: formattedIngredients,
-        instructions: formattedInstructions,
-        imageUrl,
-      };
-    });
-  } else {
-    console.error('Unexpected server response. "recipes" property is missing.');
-    this.recipes = [];
-  }
-  this.isLoading = false;
-},
-
-
+            return {
+              title,
+              ingredients: formattedIngredients,
+              instructions: formattedInstructions,
+              imageUrl,
+            };
+          }
+        );
+      } else {
+        console.error(
+          'Unexpected server response. "recipes" property is missing.'
+        );
+        this.recipes = [];
+      }
+      this.isLoading = false;
+    },
 
     selectRecipe(recipe) {
       this.selectedRecipe = recipe;
@@ -110,4 +114,3 @@ export default {
   }
 }
 </style>
-

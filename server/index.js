@@ -17,15 +17,12 @@ app.post("/api/generate-recipes", async (req, res) => {
     ? `only ${ingredients}`
     : ingredients;
 
-    const messages = [
-      {
-        role: "system",
-        content: `Generate a list of 5 unique recipes using ${ingredientsText} with the following preferences: ${preferences}. Please format each recipe as follows: |Title|: <title>, |Ingredients|: <ingredients>, |Directions|: <directions>.`,
-      },
-    ];
-    
-    
-      
+  const messages = [
+    {
+      role: "system",
+      content: `Generate a list of 5 unique recipes using ${ingredientsText} with the following preferences: ${preferences}. Please format each recipe as follows: |Title|: <title>, |Ingredients|: <ingredients>, |Directions|: <directions>.`,
+    },
+  ];
 
   try {
     const response = await axios.post(
@@ -49,19 +46,18 @@ app.post("/api/generate-recipes", async (req, res) => {
 
     const assistantMessages = response.data.choices[0].message.content.trim();
 
-const recipeRegex = /\|Title\|: (.*?), \|Ingredients\|: (.*?), \|Directions\|: (.*?)(?=\|Title\||$)/gs;
-const recipes = [];
+    const recipeRegex =
+      /\|Title\|: (.*?), \|Ingredients\|: (.*?), \|Directions\|: (.*?)(?=\|Title\||$)/gs;
+    const recipes = [];
 
-let match;
-while ((match = recipeRegex.exec(assistantMessages)) !== null) {
-  const title = match[1];
-  const ingredients = match[2];
-  const directions = match[3];
-  const imageUrl = `https://source.unsplash.com/featured/?food,recipe${recipes.length}`;
-  recipes.push({ title, ingredients, directions, imageUrl });
-}
-
-
+    let match;
+    while ((match = recipeRegex.exec(assistantMessages)) !== null) {
+      const title = match[1];
+      const ingredients = match[2];
+      const directions = match[3];
+      const imageUrl = `https://source.unsplash.com/featured/?food,recipe${recipes.length}`;
+      recipes.push({ title, ingredients, directions, imageUrl });
+    }
 
     console.log("Generated recipes:", recipes);
 
@@ -73,10 +69,6 @@ while ((match = recipeRegex.exec(assistantMessages)) !== null) {
       .json({ message: "An error occurred while generating recipes." });
   }
 });
-
-
-
-
 
 const port = process.env.PORT || 3001;
 app.listen(port, () => {
